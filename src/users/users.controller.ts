@@ -1,15 +1,25 @@
-// eslint-disable-next-line prettier/prettier
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-
-@Controller('users')
+import { User } from '@prisma/client';
+import { UserRole } from './enum/role.enum';
+@Controller()
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private service: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @Post('creat-user')
+  create(@Body() data: CreateUserDto): Promise<User> {
+    delete data.passwordConfirmation;
+    return this.service.create(data, UserRole.USER);
   }
 
   @Get()
