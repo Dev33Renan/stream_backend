@@ -1,26 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { CreateMovieDto } from './dto/create-movie.dto';
-import { UpdateMovieDto } from './dto/update-movie.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
+import { Prisma, Movie } from '@prisma/client';
 
 @Injectable()
 export class MoviesService {
-  create(createMovieDto: CreateMovieDto) {
-    return 'This action adds a new movie';
+  constructor(private db: PrismaService) {}
+
+  async create(data: Prisma.MovieCreateInput): Promise<Movie> {
+    const movie = await this.db.movie.create({ data });
+    return movie;
   }
 
-  findAll() {
-    return `This action returns all movies`;
+  async findMany(): Promise<Movie[]> {
+    const movies = await this.db.movie.findMany();
+    return movies;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} movie`;
+  async findUnique(id: string): Promise<Movie> {
+    const movie = await this.db.movie.findUnique({
+      where: { id },
+    });
+
+    if (!movie) {
+      throw new NotFoundException('Id Não encontrado na base de dados');
+    }
+
+    return movie;
   }
 
-  update(id: number, updateMovieDto: UpdateMovieDto) {
-    return `This action updates a #${id} movie`;
-  }
+  async deleteOne(id: string): Promise<{ message: string }> {
+    await this.db.movie.delete({
+      where: { id },
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} movie`;
+    return {
+      message: ' Filme deletado com sucesso',
+    };
   }
 }

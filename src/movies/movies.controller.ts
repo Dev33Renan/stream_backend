@@ -1,28 +1,45 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
-import { MoviesService } from './movies.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
+import { Movie } from '@prisma/client';
 import { CreateMovieDto } from './dto/create-movie.dto';
+import { MoviesService } from './movies.service';
+import { AuthGuard } from '@nestjs/passport';
+import { Role } from 'src/auth/role.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { UserRole } from '../users/enum/role.enum';
 
 @Controller('movies')
 export class MoviesController {
-  constructor(private readonly moviesService: MoviesService) {}
+  constructor(private service: MoviesService) {}
 
-  @Post()
-  create(@Body() createMovieDto: CreateMovieDto) {
-    return this.moviesService.create(createMovieDto);
+  @Role(UserRole.ADMIN)
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Post('create')
+  createMovie(@Body() data: CreateMovieDto): Promise<Movie> {
+    return this.service.create(data);
   }
 
-  @Get()
-  findAll() {
-    return this.moviesService.findAll();
+  @UseGuards(AuthGuard())
+  @Get('find-all')
+  findMany(): Promise<Movie[]> {
+    return this.service.findMany();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.moviesService.findOne(+id);
+  @UseGuards(AuthGuard())
+  @Get('find/:id')
+  findUnique(@Param('id') id: string): Promise<Movie> {
+    return this.service.findUnique(id);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.moviesService.remove(+id);
+  @Delete('delete/:id')
+  deleteOne(@Param('id') id: string): Promise<{ message: string }> {
+    return this.service.deleteOne(id);
   }
 }

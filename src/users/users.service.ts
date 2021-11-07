@@ -1,42 +1,68 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prettier/prettier */
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Prisma, User } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
+import { UserRole } from './enum/role.enum';
+import * as bcrypt from 'bcrypt';
+import { identity } from 'node_modules/rxjs/dist/types';
+import { removeAllListeners } from 'process';
+
 
 @Injectable()
 export class UsersService {
-  usuarios = [
-    {
-      id: 0,
-      name: 'Ralph',
-      email: 'ralph@gmail.com',
-      password: 'bolinha1',
-    },
-  ];
-  create(data: CreateUserDto) {
-    this.usuarios.push(data);
-  }
+  constructor(private db: PrismaService) {}
 
-  findAll() {
-    return this.usuarios;
-  }
+  async create(data: Prisma.UserCreateInput, role:UserRole): Promise<User> {
+    const userExists = await this.db.user.findUnique({
+      where: { email: data.email },
+    });
 
-  findOne(id: number) {
-    return this.usuarios[id];
-  }
-
-  update(id: number, data: CreateUserDto) {
-    for (let i = 0; i < this.usuarios.length; i++) {
-      if (this.usuarios[i].id === id) {
-        this.usuarios.splice(i, 1);
-      }
+    if (userExists) {
+      throw new ConflictException('Email já existe no cadastro');
     }
-    this.usuarios.push(data);
+
+    const salt = 10;
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await this.db.user.create({
+      data: {
+        ...data,
+        role: role,
+        password: hashedPassword,
+      }
+    });
+    delete user.password;
+    return user;
   }
 
-  remove(id: number) {
-    for (let i = 0; i < this.usuarios.length; i++) {
-      if (this.usuarios[i].id === id) {
-        this.usuarios.splice(i, 1);
-      }
+  async findOne(id: string): Promise<User> {
+    const user = await this.db.user.findUnique({
+     where: { id },  
+    });
+    
+    if ( !user ) {
+      throw new NotFoundException('Id Não entrado na base de dados');
     }
+
+    delete user.password;
+    return user;
   }
+
+  async findMany() {
+    const user = await this.db.user.findMany();
+    const newUser = user.map (({ password, ...resto }) => resto);
+    return newUser;
+  }
+
+  async deleteOne(id: string): Promise<{message: string}> {
+    await this.db.user.delete({
+      where: { id },
+    });
+
+    return {
+      message: ' Usuário deletado com sucesso',
+    };
+  }
+  
 }

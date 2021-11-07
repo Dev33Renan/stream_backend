@@ -1,44 +1,55 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Controller,
-  Get,
-  Post,
   Body,
-  Patch,
+  Post,
+  Get,
   Param,
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { User } from '@prisma/client';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UsersService } from './users.service';
 import { UserRole } from './enum/role.enum';
+import { SimpleGuard } from 'src/auth/simple.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { Role } from 'src/auth/role.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
+
 @Controller()
 export class UsersController {
   constructor(private service: UsersService) {}
 
-  @Post('creat-user')
-  create(@Body() data: CreateUserDto): Promise<User> {
+  @Post('create-user')
+  createUSer(@Body() data: CreateUserDto): Promise<User> {
     delete data.passwordConfirmation;
     return this.service.create(data, UserRole.USER);
   }
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
+  @Post('create-admin')
+  @Role(UserRole.ADMIN)
+  @UseGuards(AuthGuard(), RolesGuard)
+  createAdmin(@Body() data: CreateUserDto): Promise<User> {
+    delete data.passwordConfirmation;
+    return this.service.create(data, UserRole.ADMIN);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.usersService.findOne(+id);
+  @UseGuards(AuthGuard())
+  @Get('find/:id')
+  findOne(@Param('id') id: string): Promise<User> {
+    return this.service.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: number, @Body() createUserDto: CreateUserDto) {
-    return this.usersService.update(+id, createUserDto);
+  @UseGuards(AuthGuard())
+  @Get('find-all')
+  findMany() {
+    return this.service.findMany();
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: number) {
-    return this.usersService.remove(+id);
+  @UseGuards(AuthGuard())
+  @Delete('delete/:id')
+  deleteOne(@Param('id') id: string): Promise<{ message: string }> {
+    return this.service.deleteOne(id);
   }
 }
