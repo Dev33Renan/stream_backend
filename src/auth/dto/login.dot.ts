@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { User } from ".prisma/client";
 import { IsString, IsEmail } from "class-validator";
 
