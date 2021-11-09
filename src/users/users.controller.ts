@@ -12,16 +12,15 @@ import { User } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 import { UserRole } from './enum/role.enum';
-import { SimpleGuard } from 'src/auth/simple.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { Role } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 
-@Controller()
+@Controller('user')
 export class UsersController {
   constructor(private service: UsersService) {}
 
-  @Post('create-user')
+  @Post('new-user')
   createUSer(@Body() data: CreateUserDto): Promise<User> {
     delete data.passwordConfirmation;
     return this.service.create(data, UserRole.USER);
@@ -35,20 +34,21 @@ export class UsersController {
     return this.service.create(data, UserRole.ADMIN);
   }
 
-  @UseGuards(AuthGuard())
   @Get('find/:id')
+  @UseGuards(AuthGuard())
   findOne(@Param('id') id: string): Promise<User> {
     return this.service.findOne(id);
   }
 
-  @UseGuards(AuthGuard())
   @Get('find-all')
+  @UseGuards(AuthGuard())
   findMany() {
     return this.service.findMany();
   }
 
-  @UseGuards(AuthGuard())
   @Delete('delete/:id')
+  @Role(UserRole.ADMIN)
+  @UseGuards(AuthGuard(), RolesGuard)
   deleteOne(@Param('id') id: string): Promise<{ message: string }> {
     return this.service.deleteOne(id);
   }

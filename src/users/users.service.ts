@@ -5,8 +5,6 @@ import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserRole } from './enum/role.enum';
 import * as bcrypt from 'bcrypt';
-import { identity } from 'node_modules/rxjs/dist/types';
-import { removeAllListeners } from 'process';
 
 
 @Injectable()

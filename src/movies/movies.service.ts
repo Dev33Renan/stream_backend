@@ -1,3 +1,4 @@
+import { User } from '.prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { Prisma, Movie } from '@prisma/client';
@@ -36,5 +37,24 @@ export class MoviesService {
     return {
       message: ' Filme deletado com sucesso',
     };
+  }
+
+  async thermometerMovie(userId: string, movieId: string): Promise<User> {
+    await this.db.user.update({
+      where: { id: userId },
+      data: {
+        movies: {
+          connect: {
+            id: movieId,
+          },
+        },
+      },
+    });
+    return this.db.user.findUnique({
+      where: { id: userId },
+      include: {
+        movies: true,
+      },
+    });
   }
 }
