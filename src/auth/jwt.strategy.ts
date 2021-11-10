@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+
 import { PrismaService } from './../prisma.service';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
