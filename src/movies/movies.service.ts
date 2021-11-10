@@ -23,7 +23,7 @@ export class MoviesService {
     });
 
     if (!movie) {
-      throw new NotFoundException('Id Não encontrado na base de dados');
+      throw new NotFoundException('Id do Filme não encontrado');
     }
 
     return movie;
